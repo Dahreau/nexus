@@ -1,0 +1,41 @@
+<button class="cart-backdrop" [class.show]="isOpen" (click)="toggleCart()" aria-label="Close cart"></button>
+
+<div class="cart-panel" [class.open]="isOpen">
+  <div class="cart-header">
+    <h3>My Cart</h3>
+    <button class="close-btn" (click)="toggleCart()">X</button>
+  </div>
+
+  <div class="cart-body">
+    <div *ngIf="!cart || cart.items?.length === 0" class="empty-cart">
+      Your cart is empty.
+    </div>
+
+    <div *ngIf="cart && cart.items?.length">
+      <div class="cart-item" *ngFor="let item of cart.items">
+        <div class="item-info">
+          <p>{{ item.productName }}</p>
+          <p>{{ item.price * item.quantity | currency }}</p>
+        </div>
+        <div class="item-actions">
+          <button (click)="updateQuantity(item.productId, item.quantity - 1)">-</button>
+          <span>{{ item.quantity }}</span>
+          <button (click)="updateQuantity(item.productId, item.quantity + 1)">+</button>
+          <button class="remove-btn" (click)="removeItem(item.productId)">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="cart && cart.items && cart.items.length" class="checkout-section">
+      <input type="text" [(ngModel)]="shippingAddress" placeholder="Shipping address" class="shipping-input">
+      <button class="checkout-btn" (click)="validateCart()">Pay on delivery</button>
+    </div>
+  </div>
+
+  <div class="cart-footer" *ngIf="cart && cart.items?.length">
+    <h4>Total: {{ cart.totalPrice | currency }}</h4>
+    <button class="clear-btn" (click)="clearCart()">Clear cart</button>
+  </div>
+</div>

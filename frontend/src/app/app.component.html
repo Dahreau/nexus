@@ -1,0 +1,44 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+  <div class="container-fluid app-container">
+    <a class="navbar-brand" routerLink="/">Buy</a>
+    <!-- Manual toggle: only Bootstrap's CSS is loaded (no JS bundle), so this can't
+         rely on data-bs-toggle — navOpen/toggleNav() drive the .show class instead. -->
+    <button class="navbar-toggler" type="button" (click)="toggleNav()" [attr.aria-expanded]="navOpen" aria-label="Open menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" [class.show]="navOpen">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" routerLink="/" (click)="closeNav()">Products</a></li>
+        <li class="nav-item" *ngIf="(isLoggedIn$ | async) && isSeller()">
+          <a class="nav-link" routerLink="/seller" (click)="closeNav()">📊 Seller Dashboard</a>
+        </li>
+        <li class="nav-item" *ngIf="isLoggedIn$ | async">
+          <a class="nav-link" routerLink="/profile/mes-commandes" (click)="closeNav()">📋 My Orders</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <ng-container *ngIf="isLoggedIn$ | async; else guestLinks">
+          <li class="nav-item" *ngIf="getUserName() as userName">
+            <span class="nav-link" style="cursor: default; opacity: 0.85;">
+              👤 {{ userName }} <span *ngIf="isSeller()">(Seller)</span>
+            </span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" (click)="logout(); closeNav()" style="cursor: pointer">Logout</a>
+          </li>
+        </ng-container>
+        <ng-template #guestLinks>
+          <li class="nav-item"><a class="nav-link" routerLink="/login" (click)="closeNav()">Login</a></li>
+          <li class="nav-item"><a class="nav-link" routerLink="/register" (click)="closeNav()">Register</a></li>
+        </ng-template>
+      </ul>
+      <button class="btn btn-primary" (click)="toggleCart(); closeNav()">🛒 Cart</button>
+    </div>
+  </div>
+</nav>
+
+<div class="app-container">
+  <router-outlet></router-outlet>
+</div>
+
+<app-cart #cart></app-cart>

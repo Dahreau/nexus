@@ -1,0 +1,19 @@
+services:
+  nginx-proxy:
+    image: nginx:stable
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/ssl/certs:ro
+    depends_on:
+      - user-service
+      - product-service
+      - media-service
+    networks:
+      - buy-net
+
+networks:
+  buy-net:
+    external: false

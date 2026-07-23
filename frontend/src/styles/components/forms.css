@@ -1,0 +1,175 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background-color: white;
+  width: min(100%, 760px);
+  box-sizing: border-box;
+  padding: 2em;
+  margin: 80px auto;
+  border-radius: 16px;
+  transition: .4s ease-in-out;
+  box-shadow: rgba(0, 0, 0, 0.4) 1px 2px 2px;
+}
+
+.heading {
+  color: black;
+  padding-bottom: 1.3em;
+  text-align: center;
+  font-weight: bold;
+}
+
+.input {
+  border-radius: 5px;
+  border: 1px solid whitesmoke;
+  background-color: whitesmoke;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45em;
+  transition: .4s ease-in-out;
+}
+
+.input:hover {
+  box-shadow: 6px 6px 0px #969696, -3px -3px 10px #ffffff;
+}
+
+.input:focus {
+  background: #ffffff;
+  box-shadow: inset 2px 5px 10px rgba(0,0,0,0.3);
+}
+
+.form .btn {
+  margin-top: 1.3em;
+  align-self: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45em 0.65em;
+  border-radius: 10px;
+  border: none;
+  color: black;
+  transition: .4s ease-in-out;
+  box-shadow: rgba(0, 0, 0, 0.4) 1px 1px 1px;
+}
+
+.form .btn:hover {
+  box-shadow: 6px 6px 0px #969696, -3px -3px 10px #ffffff;
+  transform: translateX(-0.5em) translateY(-0.5em);
+}
+
+.form .btn:active {
+  transition: .2s;
+  transform: translateX(0em) translateY(0em);
+  box-shadow: none;
+}
+
+.form-card {
+  background: white;
+  padding: 1.8rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+  margin-bottom: 2.5rem;
+  border: 1px solid #f8fafc;
+}
+
+.form-title {
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Search bar on the product list: keyword field wider than the two price fields.
+   A dedicated class (rather than an inline style) so the ≤768px responsive
+   rule can actually override it — inline styles beat external stylesheet rules. */
+.search-row {
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.3px;
+}
+
+.form-group .form-control {
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  transition: all 0.25s ease;
+  background: #fafbfc;
+  font-size: 0.95rem;
+}
+
+.form-group .form-control:focus {
+  border-color: #8b5cf6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+  outline: none;
+}
+
+.btn-submit {
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, #8b5cf6, #461b8b);
+  color: #000000;
+  border: none;
+  padding: 0.8rem 2.5rem;
+  border-radius: 40px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
+  width: fit-content;
+}
+
+.btn-submit:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 28px rgba(139, 92, 246, 0.35);
+}
+
+.btn-submit:active {
+  transform: scale(0.97);
+}
+
+.btn-edit {
+  border-color: #e2e8f0 !important;
+  color: #53d65e;
+}
+
+.btn-edit:hover {
+  background: #f1f5f9;
+  border-color: #8b5cf6 !important;
+  color: #6d28d9;
+}
+
+.btn-delete {
+  border-color: #fee2e2 !important;
+  color: #ef4444;
+}
+
+.btn-delete:hover {
+  background: #fef2f2;
+  border-color: #7a4646 !important;
+  color: #b91c1c;
+}

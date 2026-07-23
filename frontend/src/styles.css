@@ -1,0 +1,23 @@
+/* global styles for the demo app */
+:root{
+	--bg:#f4f6f9;
+	--card:#ffffff;
+	--muted:#6c757d;
+	--primary:#0069ff;
+	--accent:#7c5cff;
+	--radius:12px;
+}
+body { font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(180deg, #f7f9fb 0%, var(--bg) 100%); color:#222; }
+.app-container { max-width:1100px; margin:28px auto; padding:8px; }
+.navbar { border-radius: 10px; }
+.product-card { margin-bottom:18px; border-radius:var(--radius); overflow:hidden; background:var(--card); box-shadow: 0 6px 18px rgba(32,40,60,0.08); transition: transform .18s ease, box-shadow .18s ease; }
+.product-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(32,40,60,0.12); }
+.product-description { min-height:64px; color:#444; }
+.small-id { color:var(--muted); font-size:0.85rem; }
+.navbar-brand { font-weight:700; color:var(--primary); }
+.price-badge { background: linear-gradient(90deg,var(--primary),var(--accent)); color:#fff; border-radius:8px; padding:6px 10px; font-weight:600; }
+.search-input { max-width:420px; }
+.card-img-top img{ display:block; margin:0 auto; }
+.btn-primary, .btn-success { border-radius:8px; }
+.form-control, .form-select { border-radius:8px; }
+.placeholder-img { background:#e2e8f0; height:160px; display:flex; align-items:center; justify-content:center; color:#475569; }

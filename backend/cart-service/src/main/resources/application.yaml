@@ -1,0 +1,9 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: cart-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/buy01_cart_db}

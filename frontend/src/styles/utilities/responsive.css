@@ -1,0 +1,84 @@
+/* Shared rules for tablet AND phone (≤768px) — anything that should apply
+   at every small size, regardless of exactly how small. */
+@media (max-width: 768px) {
+  .form-row,
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    align-items: start;
+    gap: 0.8rem;
+  }
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  /* Mobile nav: no bootstrap.bundle.js here, so .collapse/.show is driven by
+     AppComponent.navOpen (see app.component.ts/html) instead of data-bs-toggle. */
+  .navbar-collapse {
+    padding-top: 0.8rem;
+  }
+  .navbar-collapse .navbar-nav {
+    margin-bottom: 0.5rem;
+  }
+  .navbar-collapse .btn-primary {
+    width: 100%;
+  }
+}
+
+/* Tablet only (481-768px): two columns still fit comfortably. */
+@media (min-width: 481px) and (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Phone only (≤480px): one column everywhere, tighter spacing. */
+@media (max-width: 480px) {
+  .cart-fab {
+    width: 50px;
+    height: 50px;
+    font-size: 1.4rem;
+    bottom: 20px;
+    left: 20px;
+  }
+  .cart-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+  .qty-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+  }
+  .qty-value {
+    font-size: 1.1rem;
+    min-width: 28px;
+  }
+  .btn-add-to-cart {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  .footer-actions {
+    flex-direction: column;
+  }
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-card {
+    padding: 1rem;
+  }
+  .product-actions {
+    flex-wrap: wrap;
+  }
+  .product-actions button {
+    flex: 1 1 100%;
+  }
+}

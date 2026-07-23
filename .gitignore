@@ -1,0 +1,58 @@
+### Node / JavaScript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### Angular / front-end build outputs
+/dist/
+/build/
+/coverage/
+frontend/.angular/cache/
+frontend/dist/
+frontend/dist/buy-frontend/
+
+### Java / Maven
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+.m2/repository/
+
+### IDEs and editors
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+### Certificates and private keys (do not commit private keys)
+certs/*.key
+certs/*.pfx
+certs/*.p12
+certs/*.pem
+
+### Docker / runtime generated
+**/uploads/
+
+### Logs
+*.log
+
+### OS
+Thumbs.db
+.DS_Store
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# System files / packages
+*.deb
+*.crt
+
+# Jenkins
+old-jenkins-data/
+jenkins-data/

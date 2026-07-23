@@ -1,0 +1,184 @@
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - buy-net
+
+  jenkins:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    user: root
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    networks:
+      - buy-net
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - GIT_CONFIG_GLOBAL=/var/jenkins_home/.gitconfig
+
+  sonarqube-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonarqube
+    volumes:
+      - sonarqube_db:/var/lib/postgresql/data
+    networks:
+      - buy-net
+
+  sonarqube:
+    image: sonarqube:latest
+    depends_on:
+      - sonarqube-db
+    ports:
+      - "9000:9000"
+    networks:
+      - buy-net
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonarqube
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+      - SONAR_WEB_JAVAOPTS=-Xmx512m -Xms256m
+      - SONAR_CE_JAVAOPTS=-Xmx512m -Xms256m
+      - SONAR_SEARCH_JAVAOPTS=-Xmx512m -Xms256m
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:4200"
+    networks:
+      - buy-net
+
+  user-service:
+    build: ./backend/user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/userdb
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    depends_on:
+      - mongo
+    networks:
+      - buy-net
+
+  product-service:
+    build: ./backend/product-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/productdb
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    depends_on:
+      - mongo
+    networks:
+      - buy-net
+
+  media-service:
+    build: ./backend/media-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/mediadb
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+      - MEDIA_UPLOAD_DIR=/app/uploads
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    depends_on:
+      - mongo
+      - product-service
+    networks:
+      - buy-net
+    volumes:
+      # persist uploaded media files on the host so they survive container rebuilds
+      - ./backend/media-service/uploads:/app/uploads
+
+  order-service:
+    build: ./backend/order-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/orderdb
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
+      - USER_SERVICE_URL=http://user-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    depends_on:
+      - mongo
+      - user-service
+      - product-service
+    networks:
+      - buy-net
+
+  cart-service:
+    build: ./backend/cart-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/cartdb
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+    depends_on:
+      - mongo
+      - product-service
+    networks:
+      - buy-net
+
+
+volumes:
+  mongo-data:
+  jenkins-data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  sonarqube_db:
+
+networks:
+  buy-net:
+    driver: bridge
