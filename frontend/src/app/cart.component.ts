@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CartService, Cart, CartRequest } from './services/cart.service';
 import { Router } from '@angular/router';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-cart',
@@ -14,7 +15,8 @@ export class CartComponent implements OnInit {
 
   constructor(
   private readonly cartService: CartService,
-  private readonly router: Router      // ← ajouter
+  private readonly router: Router,
+  private readonly auth: AuthService
 ) {}
 
   ngOnInit(): void {
@@ -24,6 +26,12 @@ export class CartComponent implements OnInit {
   }
 
   loadCart(): void {
+    // Cart requires auth on the backend — skip the call entirely for guests
+    // instead of firing a request we know will 403.
+    if (!this.auth.getToken()) {
+      this.cart = null;
+      return;
+    }
     this.cartService.getCart().subscribe({
       next: (data) => this.cart = data,
       error: (err) => console.error(err)
