@@ -192,4 +192,5 @@ volumes:
 
 networks:
   buy-net:
+    name: buy-net
     driver: bridge

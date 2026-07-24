@@ -26,6 +26,7 @@ pipeline {
             when { expression { params.ROLLBACK == false } }
             steps {
                 sh 'docker network connect safe-zone_buy-net buy-01-jenkins-1 || true'
+                sh 'docker network connect buy-net buy-01-jenkins-1 || true'
                 echo 'Git Checkout in Progress...'
                 checkout scm
                 sh 'ls -la'
@@ -283,10 +284,7 @@ pipeline {
             when { expression { params.ROLLBACK == false } }
             steps {
                 script {
-                    // Les images buy-01-<service>:latest existent déjà, buildées par le
-                    // stage "Deploy with Rollback Strategy" juste avant. On les retague
-                    // avec une version unique et on les pousse vers le registre Docker
-                    // de Nexus, sans rebuild inutile.
+
                     def version = "1.2.${env.BUILD_NUMBER}"
                     withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                         sh "echo \$NEXUS_PASS | docker login localhost:5001 -u \$NEXUS_USER --password-stdin"
