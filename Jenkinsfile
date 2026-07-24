@@ -26,6 +26,7 @@ pipeline {
             when { expression { params.ROLLBACK == false } }
             steps {
                 sh 'docker network connect safe-zone_buy-net buy-01-jenkins-1 || true'
+                sh 'docker network connect buy-net buy-01-jenkins-1 || true'
                 echo 'Git Checkout in Progress...'
                 checkout scm
                 sh 'ls -la'
@@ -175,6 +176,57 @@ pipeline {
             }
         }
         
+        stage('Publish Backend Artifacts to Nexus') {
+            when { expression { params.ROLLBACK == false } }
+            parallel {
+                stage('Publish User Service') {
+                    steps {
+                        dir('backend/user-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
+                            }
+                        }
+                    }
+                }
+                stage('Publish Product Service') {
+                    steps {
+                        dir('backend/product-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
+                            }
+                        }
+                    }
+                }
+                stage('Publish Media Service') {
+                    steps {
+                        dir('backend/media-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
+                            }
+                        }
+                    }
+                }
+                stage('Publish Order Service') {
+                    steps {
+                        dir('backend/order-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
+                            }
+                        }
+                    }
+                }
+                stage('Publish Cart Service') {
+                    steps {
+                        dir('backend/cart-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Build & Test Frontend') {
             when { expression { params.ROLLBACK == false } }
             steps {
@@ -223,6 +275,26 @@ pipeline {
                             docker compose -p buy-01 up -d --force-recreate frontend user-service product-service media-service order-service cart-service
                         '''
                         error('Deployment failed and rollback executed. Check logs for details.')
+                    }
+                }
+            }
+        }
+
+        stage('Publish Docker Images to Nexus') {
+            when { expression { params.ROLLBACK == false } }
+            steps {
+                script {
+
+                    def version = "1.2.${env.BUILD_NUMBER}"
+                    withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                        sh "echo \$NEXUS_PASS | docker login localhost:5001 -u \$NEXUS_USER --password-stdin"
+                        for (service in ['user-service', 'product-service', 'media-service', 'order-service', 'cart-service']) {
+                            sh """
+                                docker tag buy-01-${service}:latest localhost:5001/${service}:${version}
+                                docker push localhost:5001/${service}:${version}
+                            """
+                        }
+                        sh 'docker logout localhost:5001'
                     }
                 }
             }

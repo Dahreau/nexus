@@ -170,6 +170,16 @@ services:
     networks:
       - buy-net
 
+  nexus:
+    image: sonatype/nexus3:latest
+    restart: unless-stopped
+    ports:
+      - "8086:8081"
+      - "5001:5001"
+    volumes:
+      - nexus-data:/nexus-data
+    networks:
+      - buy-net
 
 volumes:
   mongo-data:
@@ -178,7 +188,9 @@ volumes:
   sonarqube_extensions:
   sonarqube_logs:
   sonarqube_db:
+  nexus-data:
 
 networks:
   buy-net:
+    name: buy-net
     driver: bridge

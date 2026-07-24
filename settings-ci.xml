@@ -1,0 +1,16 @@
+<settings>
+  <servers>
+    <server>
+      <id>nexus</id>
+      <username>${env.NEXUS_USER}</username>
+      <password>${env.NEXUS_PASS}</password>
+    </server>
+  </servers>
+  <mirrors>
+    <mirror>
+      <id>nexus</id>
+      <mirrorOf>*</mirrorOf>
+      <url>http://nexus:8081/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+</settings>
