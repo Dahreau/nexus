@@ -199,7 +199,14 @@ pipeline {
                     steps {
                         dir('backend/user-service') {
                             withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml'
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
                             }
                         }
                     }
@@ -208,7 +215,14 @@ pipeline {
                     steps {
                         dir('backend/product-service') {
                             withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml'
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
                             }
                         }
                     }
@@ -217,7 +231,14 @@ pipeline {
                     steps {
                         dir('backend/media-service') {
                             withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml'
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
                             }
                         }
                     }
@@ -226,7 +247,14 @@ pipeline {
                     steps {
                         dir('backend/order-service') {
                             withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml'
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
                             }
                         }
                     }
@@ -235,7 +263,14 @@ pipeline {
                     steps {
                         dir('backend/cart-service') {
                             withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml'
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
                             }
                         }
                     }
