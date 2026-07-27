@@ -1,64 +1,266 @@
-# Setup Nexus — Artifact Management System
+# Nexus — buy-02
 
-Documentation de setup/configuration/usage pour l'audit "Artifact Management System with Nexus". Calquée sur la grille d'audit (`docs/nexus-audit.md`). À remplir au fur et à mesure — chaque section liste ce qu'il faut capturer en écran.
+## Prérequis
 
-> Statut : 🚧 en cours
+WSL Ubuntu avec :
 
-## 1. Setup Nexus Repository Manager
+- Docker
+- Maven (Java 17, aligné avec le projet — pas besoin de bascule Java 11/17 puisque Nexus tourne en conteneur, pas en process natif)
 
-- Installation : Nexus tourne en conteneur Docker (`sonatype/nexus3`) déclaré dans `docker-compose.yml`, service `nexus` (port `8086` pour l'UI/API, `5001` pour le repo Docker hosted).
-- Utilisateur non-root : l'image officielle `sonatype/nexus3` fait tourner le process sous un utilisateur non-root par défaut à l'intérieur du conteneur — pas de configuration manuelle nécessaire côté OS.
-- Repos créés :
-  - [ ] `maven-releases` (hosted)
-  - [ ] `maven-snapshots` (hosted)
-  - [ ] `maven-central` (proxy)
-  - [ ] `maven-public` (group)
-  - [ ] `docker` (hosted)
+Jenkins avec Docker Pipeline (déjà en place, voir `Jenkinsfile`).
 
-**Captures à prendre :** `docker compose up -d nexus` + logs de démarrage réussi · page de création du premier utilisateur admin · liste des repos créés.
+## Étape 1 installation
 
-## 2. Sample Web Application
+1- Contrairement à une install native (télécharger le `.tar.gz`, créer un utilisateur système `nexus` à la main), on fait tourner Nexus en conteneur Docker. Déclaré dans `docker-compose.yml` :
 
-buy-02 : 5 microservices Spring Boot (`user-service`, `product-service`, `media-service`, `order-service`, `cart-service`), chacun un projet Maven indépendant. Voir `README.md` / `docs/architecture.md` pour le détail.
+```yaml
+nexus:
+  image: sonatype/nexus3:latest
+  restart: unless-stopped
+  ports:
+    - "8086:8081" # UI/API Nexus
+    - "5001:5001" # registre Docker hosted
+  volumes:
+    - nexus-data:/nexus-data
+  networks:
+    - buy-net
+```
 
-## 3. Artifact Publishing
+2- Démarrage :
 
-`distributionManagement` ajouté à chaque `pom.xml` pointant vers `nexus-releases`/`nexus-snapshots`. Commande : `mvn clean deploy`.
+```bash
+docker compose up -d nexus
+```
 
-**Captures à prendre :** extrait du `pom.xml` avec le bloc `distributionManagement` · sortie console d'un `mvn deploy` réussi · l'artefact visible dans l'UI Nexus.
+![Logs de démarrage de Nexus](img/Screenshot_Nexus-Startup-Logs.png)
 
-## 4. Dependency Management (proxy)
+3- Schéma de ports
 
-`~/.m2/settings.xml` (ou settings.xml de projet en CI) configuré avec un mirror `<mirrorOf>*</mirrorOf>` vers `maven-public`, forçant toutes les dépendances à transiter par Nexus.
+| Service               | Port | Description                                                                     |
+| --------------------- | ---- | ------------------------------------------------------------------------------- |
+| Jenkins               | 8080 | Pipeline CI/CD                                                                  |
+| Nexus Web UI          | 8086 | Interface web d'administration (mappé depuis le port interne 8081 du conteneur) |
+| Nexus Docker registry | 5001 | Dépôt Docker privé                                                              |
+| User Service          | 8081 | Microservice utilisateurs                                                       |
+| Product Service       | 8082 | Microservice produits                                                           |
+| Media Service         | 8083 | Microservice médias                                                             |
+| Order Service         | 8084 | Microservice commandes                                                          |
+| Cart Service          | 8085 | Microservice panier                                                             |
 
-**Captures à prendre :** `settings.xml` (credentials masqués) · `mvn clean install -X` montrant que les artefacts viennent de Nexus et non d'Apache/Central directement.
+## Étape 2 vérification de l'utilisateur non-root
 
-## 5. Versioning
+1- Pas de manip manuelle nécessaire ici : l'image officielle `sonatype/nexus3` fait déjà tourner le process sous un utilisateur système dédié à l'intérieur du conteneur.
 
-`maven-releases` configuré en mode immuable (redeploy désactivé). Numéro de version géré dans chaque `pom.xml`.
+2- Vérification :
 
-**Captures à prendre :** option "Disable redeploy" activée sur `maven-releases` · deux versions différentes d'un même artefact visibles dans Nexus · démonstration d'un rollback (changement de version dans le pom + build résolu depuis Nexus).
+```bash
+docker exec -it nexus-nexus-1 id
+```
 
-## 6. Docker Integration
+3- résultat attendu :
 
-Repo `docker` (hosted) sur le connecteur `5001`. Docker Bearer Token Realm activé (Security → Realms). `insecure-registries` configuré côté client Docker si HTTP.
+```
+uid=200(nexus) gid=200(nexus) groups=200(nexus)
+```
 
-**Captures à prendre :** config du repo Docker dans Nexus · activation du realm · `docker login`/`push` réussi · image visible dans le repo Nexus.
+![Vérification de l'utilisateur non-root](img/Screenshot_User-verification.png)
 
-## 7. Continuous Integration (CI)
+## Étape 3 configuration côté Nexus
 
-Pipeline Jenkins (`Jenkinsfile`) étendu avec un stage de publication (Maven `deploy` + `docker push`) déclenché à chaque changement poussé, en plus des stages build/test existants. Credentials Nexus centralisés via un credential Jenkins dédié (`nexus-creds`), injecté en variables d'env (`withCredentials`) — jamais en clair dans le repo.
+1- Ouvrir le navigateur, aller à l'adresse :
 
-**Captures à prendre :** credential `nexus-creds` créé dans Jenkins · pipeline avec le nouveau stage de publication · run réussi de bout en bout.
+```
+http://localhost:8086
+```
 
-## 8. Documentation
+2- Création du premier utilisateur admin
 
-Ce document + `docs/nexus-notions.md` (notions internes).
+![Création du premier utilisateur admin](img/Screenshot_Nexus-First-Admin-Setup.png)
 
-## 9. Bonus — Sécurité et contrôle d'accès
+3- Création des repos (Server administration and configuration → Repository → Create repository) :
 
-- [ ] Rôles/utilisateurs Nexus au-delà de l'admin (ex: rôle lecture seule pour la CI, rôle déploiement)
-- [ ] Permissions au niveau repo (qui peut push vs pull)
-- [ ] Restriction d'accès à certains repos/artefacts
+| Nom               | Type   | Rôle                                                     |
+| ----------------- | ------ | -------------------------------------------------------- |
+| `maven-releases`  | hosted | versions stables, figées                                 |
+| `maven-snapshots` | hosted | versions en développement                                |
+| `maven-central`   | proxy  | cache du dépôt Maven Central                             |
+| `maven-public`    | group  | point d'entrée unique agrégeant tous les repos ci-dessus |
+| `docker`          | hosted | images Docker du projet, connecteur HTTP port 5001       |
 
-**Captures à prendre :** création d'un rôle · attribution de permissions par repo · test d'accès refusé pour un utilisateur non autorisé.
+![Les 5 repos créés](img/Screenshot_5-created-repos.png)
+
+## Étape 4 configuration de Maven (client-side)
+
+1- Aller dans le fichier :
+
+```bash
+nano ~/.m2/settings.xml
+```
+
+2- Écrire dedans :
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>nexus-releases</id>
+      <username>admin</username>
+      <password>mot-de-passe</password>
+    </server>
+    <server>
+      <id>nexus-snapshots</id>
+      <username>admin</username>
+      <password>mot-de-passe</password>
+    </server>
+  </servers>
+  <mirrors>
+    <mirror>
+      <id>maven-public</id>
+      <mirrorOf>*</mirrorOf>
+      <url>http://localhost:8086/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+</settings>
+```
+
+Le mirror `<mirrorOf>*</mirrorOf>` force Maven à solliciter Nexus pour toutes les dépendances, garantissant le rôle de proxy — y compris quand une autre URL est explicitement demandée en ligne de commande (voir étape 6).
+
+## Étape 5 intégration du projet (artifact deployment)
+
+1- Configuration des `pom.xml` : dans chacun des 5 microservices (`user-service`, `product-service`, `media-service`, `order-service`, `cart-service`) ajouter :
+
+```xml
+<distributionManagement>
+    <repository>
+        <id>nexus-releases</id>
+        <url>http://localhost:8086/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+        <id>nexus-snapshots</id>
+        <url>http://localhost:8086/repository/maven-snapshots/</url>
+    </snapshotRepository>
+</distributionManagement>
+```
+
+Maven choisit tout seul le repo de destination selon le numéro de version : suffixe `-SNAPSHOT` → `nexus-snapshots`, sinon → `nexus-releases`.
+
+2- Déploiement du projet :
+
+```bash
+mvn clean deploy -DskipTests
+```
+
+L'artefact `.jar` est visible dans le dépôt `maven-snapshots` de l'interface Nexus.
+
+![Artefact déployé dans Nexus](img/Screeshot_Artifact-in-nexus-interface-after-first-deploy.png)
+
+3- Preuve que Nexus proxy bien les dépendances externes (pas que nos propres artefacts) : en demandant explicitement à Maven d'aller chercher un artefact directement sur Maven Central via `-DremoteRepositories=...`, le mirror (`<mirrorOf>*</mirrorOf>`) redirige quand même tout vers `maven-public` — y compris des dizaines de dépendances tierces réelles (`commons-lang3`, `httpclient`, `httpcore`, modules `doxia`...), jamais vers `repo.maven.apache.org` :
+
+```bash
+rm -rf ~/.m2/repository/org/apache/commons/commons-lang3/3.8.1
+mvn dependency:get -Dartifact=org.apache.commons:commons-lang3:3.8.1:jar -DremoteRepositories=central::default::https://repo.maven.apache.org/maven2/
+```
+
+```
+Downloading from maven-public: http://localhost:8086/repository/maven-public/org/apache/commons/commons-lang3/3.8.1/commons-lang3-3.8.1.jar
+Downloaded from maven-public: .../commons-lang3-3.8.1.jar (502 kB at 290 kB/s)
+Downloading from maven-public: http://localhost:8086/repository/maven-public/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar
+Downloaded from maven-public: .../httpclient-4.5.13.jar (780 kB at 464 kB/s)
+```
+
+Le flag CLI demandait explicitement Maven Central — le log répond quand même `maven-public`, donc `localhost:8086`. C'est la preuve : impossible de contourner Nexus, même en essayant.
+
+## Étape 6 gestion du versioning avec Nexus
+
+Démonstration faite sur `user-service`.
+
+-Immuabilité : le dépôt `maven-releases` refuse par défaut tout redeploy sur une version déjà publiée.
+-Traçabilité : chaque version release reste consultable indéfiniment dans Nexus.
+
+1- Publication d'une première release :
+
+```bash
+# pom.xml : <version>1.0.0</version>
+mvn clean deploy -DskipTests
+```
+
+```
+BUILD SUCCESS — Uploaded to nexus-releases: .../user-service-1.0.0.jar
+```
+
+![Première publication de la release 1.0.0](img/Screenshot_First-Release-Deploy-Success.png)
+
+2- Preuve d'immutabilité — retenter le même deploy, sans rien changer :
+
+```bash
+mvn clean deploy -DskipTests
+```
+
+```
+BUILD FAILURE
+[ERROR] ... status code: 400, reason phrase: maven-releases/.../user-service-1.0.0.pom
+cannot be updated as asset already exists and redeploy is not allowed (400)
+```
+
+![Erreur de redeploy sur une version déjà publiée](img/Screenshot_Deploy-failure-after-deploying-the-same-version.png)
+
+3- Publication d'une deuxième version :
+
+```bash
+# pom.xml : <version>1.1.0</version>
+mvn clean deploy -DskipTests
+```
+
+![Deux versions release publiées dans Nexus](img/Screenshot_Nexus-Browse-two-versions.png)
+
+4- Récupération explicite d'une version précise (pas juste la dernière) :
+
+```bash
+rm -rf ~/.m2/repository/com/example/user-service/1.0.0
+mvn dependency:get -Dartifact=com.example:user-service:1.0.0:jar -DremoteRepositories=nexus-releases::default::http://localhost:8086/repository/maven-releases/
+```
+
+```
+Downloading from maven-public: .../user-service-1.0.0.jar
+Downloaded from maven-public: .../user-service-1.0.0.jar (33 MB at 107 MB/s)
+BUILD SUCCESS
+```
+
+![Preuve de récupération d'une version précise depuis Nexus](img/Screenshot_Explicit-dependency-get-from-nexus.png)
+
+5- Retour en mode développement : une fois la démo terminée, `user-service` est repassé en `1.2.0-SNAPSHOT` pour ne pas bloquer les futurs déploiements automatiques de la CI (une release publiée refuse tout redeploy, y compris depuis Jenkins). Les versions `1.0.0` et `1.1.0` restent consultables indéfiniment dans `maven-releases`.
+
+## Étape 7 gestion des artefacts Docker avec Nexus
+
+1- Vérification du repo docker dans Nexus : http bien sur `5001`, URL sur `http://localhost:8086/repository/docker/`
+
+2- Configuration du Docker Bearer Token Realm : Security → Realms → activer "Docker Bearer Token Realm"
+
+![Activation du Docker Bearer Token Realm](img/Screenshot_Activate-Docker-Bearer-Token-Realm.png)
+
+3- Workflow de publication d'une image :
+
+```bash
+docker login localhost:5001
+docker build -t cart-service:1.2.2 .
+docker tag cart-service:1.2.2 localhost:5001/cart-service:1.2.2
+docker push localhost:5001/cart-service:1.2.2
+```
+
+![Image cart-service visible dans le repo Docker Nexus](img/Screenshot_Cart-Service-Docker-Image.png)
+
+## Étape 8 intégration continue (Jenkins)
+
+1- Le `Jenkinsfile` publie automatiquement à chaque push/PR, en plus des builds/tests existants :
+
+- stage **"Publish Backend Artifacts to Nexus"** — `mvn deploy` en parallèle sur les 5 services
+- stage **"Publish Docker Images to Nexus"** — build, tag (`1.2.${env.BUILD_NUMBER}`), push de chaque image
+
+2- Gestion sécurisée des secrets : credential Jenkins dédié `nexus-creds`, injecté via `withCredentials(...)` en variables d'environnement temporaires (`NEXUS_USER`/`NEXUS_PASS`) — jamais en clair dans le repo, jamais dans les logs (masqué automatiquement par Jenkins).
+
+![Credential nexus-creds dans Jenkins](img/Screenshot_Jenkins-nexus-creds-Credential.png)
+![PR "Setup Nexus" approuvée et mergée](img/Screenshot_Jenkins-PR-Merged.png)
+
+## Note — WAR non applicable
+
+Le projet buy-02 est en Spring Boot, qui embarque son propre serveur et ne produit que des `.jar` exécutables. WAR est un format pensé pour être déployé dans un serveur externe (Tomcat...), non pertinent pour ce type d'application — choix délibéré, pas un oubli.

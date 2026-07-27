@@ -21,7 +21,7 @@ pipeline {
     }
 
     stages {
-        
+
         stage('Checkout Git') {
             when { expression { params.ROLLBACK == false } }
             steps {
@@ -55,7 +55,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Build & Test Backend') {
             when { expression { params.ROLLBACK == false } }
             parallel {
@@ -175,57 +175,6 @@ pipeline {
                 }
             }
         }
-        
-        stage('Publish Backend Artifacts to Nexus') {
-            when { expression { params.ROLLBACK == false } }
-            parallel {
-                stage('Publish User Service') {
-                    steps {
-                        dir('backend/user-service') {
-                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
-                            }
-                        }
-                    }
-                }
-                stage('Publish Product Service') {
-                    steps {
-                        dir('backend/product-service') {
-                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
-                            }
-                        }
-                    }
-                }
-                stage('Publish Media Service') {
-                    steps {
-                        dir('backend/media-service') {
-                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
-                            }
-                        }
-                    }
-                }
-                stage('Publish Order Service') {
-                    steps {
-                        dir('backend/order-service') {
-                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
-                            }
-                        }
-                    }
-                }
-                stage('Publish Cart Service') {
-                    steps {
-                        dir('backend/cart-service') {
-                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                                sh 'mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/maven-snapshots/'
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         stage('Build & Test Frontend') {
             when { expression { params.ROLLBACK == false } }
@@ -242,13 +191,99 @@ pipeline {
                 }
             }
         }
-    
+
+        stage('Publish Backend Artifacts to Nexus') {
+            when { expression { params.ROLLBACK == false } }
+            parallel {
+                stage('Publish User Service') {
+                    steps {
+                        dir('backend/user-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Publish Product Service') {
+                    steps {
+                        dir('backend/product-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Publish Media Service') {
+                    steps {
+                        dir('backend/media-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Publish Order Service') {
+                    steps {
+                        dir('backend/order-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Publish Cart Service') {
+                    steps {
+                        dir('backend/cart-service') {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh '''
+                                    VERSION=$(mvn -q -s ${WORKSPACE}/settings-ci.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                                    case "$VERSION" in
+                                        *-SNAPSHOT) TARGET_REPO=maven-snapshots ;;
+                                        *) TARGET_REPO=maven-releases ;;
+                                    esac
+                                    mvn -B deploy -DskipTests -s ${WORKSPACE}/settings-ci.xml -DaltDeploymentRepository=nexus::default::http://nexus:8081/repository/${TARGET_REPO}/
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Deploy with Rollback Strategy') {
             when { expression { params.ROLLBACK == false } }
             steps {
                 script {
                     echo '🚀 Starting deployment process...'
-                    
+
                     sh 'docker images --format "{{.Repository}}:{{.Tag}}" | grep buy-01 | grep \':latest$\' > /tmp/current_images.txt || true'
                     sh '''
                     for img in $(cat /tmp/current_images.txt); do
@@ -257,12 +292,12 @@ pipeline {
                         docker tag "$img" "${base_img}:latest-backup"
                     done
                     '''
-                    
+
                     try {
                         sh 'docker compose -p buy-01 build frontend user-service product-service media-service order-service cart-service'
                         sh 'docker compose -p buy-01 up -d --force-recreate frontend user-service product-service media-service order-service cart-service'
                         sh 'echo "Waiting for services to stabilize..." && sleep 10'
-                        
+
                     } catch (Exception e) {
                         echo '❌ Error detected, rollback starting...'
                         sh '''
@@ -320,7 +355,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         always {
             echo "📊 Pipeline execution finished. Status: ${currentBuild.currentResult}"
@@ -333,7 +368,7 @@ pipeline {
                 subject: "✅ SUCCESS: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
                 body: """
                     Build réussi avec succès !
-                    
+
                     Dashboards SonarQube :
                     - User Service : http://sonarqube:9000/dashboard?id=buy-02-user
                     - Product Service : http://sonarqube:9000/dashboard?id=buy-02-product
@@ -341,7 +376,7 @@ pipeline {
                     - Order Service : http://sonarqube:9000/dashboard?id=buy-02-order
                     - Cart Service : http://sonarqube:9000/dashboard?id=buy-02-cart
                     - Frontend : http://sonarqube:9000/dashboard?id=buy-02-front
-                    
+
                     Job: ${env.JOB_NAME}
                     Build #: ${env.BUILD_NUMBER}
                     URL: ${env.BUILD_URL}
@@ -357,7 +392,7 @@ pipeline {
                 body: """
                     Build échoué !
                     Le pipeline a bloqué durant l'analyse du service : ${env.CURRENT_SERVICE ?: 'Initialisation / Tests'}
-                    
+
                     Liens directs SonarQube pour vérification :
                     - User Service : http://sonarqube:9000/dashboard?id=buy-02-user
                     - Product Service : http://sonarqube:9000/dashboard?id=buy-02-product
@@ -365,7 +400,7 @@ pipeline {
                     - Order Service : http://sonarqube:9000/dashboard?id=buy-02-order
                     - Cart Service : http://sonarqube:9000/dashboard?id=buy-02-cart
                     - Frontend : http://sonarqube:9000/dashboard?id=buy-02-front
-                    
+
                     Job: ${env.JOB_NAME}
                     Build #: ${env.BUILD_NUMBER}
                     URL: ${env.BUILD_URL}
