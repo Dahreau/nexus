@@ -6,7 +6,7 @@ import { AuthService } from './services/auth.service';
   selector: 'app-login',
   template: `
     <form class="form" (submit)="login($event)">
-      <p class="heading">Login</p>
+      <p class="heading">Login!</p>
       <input class="input" placeholder="Email" type="text" name="email" [(ngModel)]="email">
       <input class="input" placeholder="Password" type="password" name="password" [(ngModel)]="password">
       <button class="btn" type="submit">Submit</button>

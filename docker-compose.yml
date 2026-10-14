@@ -51,7 +51,8 @@ services:
       - SONAR_JDBC_PASSWORD=sonar
       - SONAR_WEB_JAVAOPTS=-Xmx512m -Xms256m
       - SONAR_CE_JAVAOPTS=-Xmx512m -Xms256m
-      - SONAR_SEARCH_JAVAOPTS=-Xmx512m -Xms256m
+      - SONAR_SEARCH_JAVAOPTS=-Xmx512m -Xms512m
+      - SONAR_VALIDATEWEBHOOKS=false
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
